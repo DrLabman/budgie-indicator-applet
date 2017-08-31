@@ -236,7 +236,8 @@ static void entry_added(IndicatorObject *io, IndicatorObjectEntry *entry, GtkWid
         }
 
         GtkWidget *menuitem = gtk_menu_item_new();
-        GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);
+        //GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);
+        GtkWidget *box = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
 
         /* Allows indicators to receive mouse scroll event in GTK+3 */
         gtk_widget_add_events(GTK_WIDGET(menuitem), GDK_SCROLL_MASK);
@@ -248,12 +249,41 @@ static void entry_added(IndicatorObject *io, IndicatorObjectEntry *entry, GtkWid
         g_signal_connect(G_OBJECT(menuitem), "scroll-event", G_CALLBACK(entry_scrolled), entry);
 
         if (entry->image != NULL) {
+                GtkAllocation child_alloc;
+                const gchar *name;
+                GdkPixbuf *pixbuf;
+                int width, height;
+                GtkWidget *image;
+
+                pixbuf = gtk_image_get_pixbuf(GTK_IMAGE(entry->image));
+                width = gdk_pixbuf_get_width(pixbuf);
+                height = gdk_pixbuf_get_height(pixbuf);
+                g_debug ("zzz pixbuf size: w=%d h=%d", width, height);
+                if (width == height && height > 22) {
+                        g_debug ("zzz pixbuf resizing");
+                        pixbuf = gdk_pixbuf_scale_simple(pixbuf, 22, 22, GDK_INTERP_BILINEAR);
+                        width = gdk_pixbuf_get_width(pixbuf);
+                        height = gdk_pixbuf_get_height(pixbuf);
+                        g_debug ("zzz pixbuf size: w=%d h=%d", width, height);
+                        entry->image = gtk_image_new_from_pixbuf(pixbuf);
+                        gtk_widget_set_visible(GTK_IMAGE(entry->image), TRUE);
+                }
+
                 g_debug("zzz have an image");
                 gtk_box_pack_start(GTK_BOX(box), GTK_WIDGET(entry->image), FALSE, FALSE, 1);
                 if (gtk_widget_get_visible(GTK_WIDGET(entry->image))) {
                         g_debug("zzz and is visible");
                         something_visible = TRUE;
                 }
+
+                gtk_widget_get_allocation(GTK_WIDGET(entry->image), &child_alloc);
+                g_debug ("zzz image size allocate: x=%d y=%d w=%d h=%d",
+                         child_alloc.x, child_alloc.y, child_alloc.width, child_alloc.height);
+                name = gtk_widget_get_name(GTK_WIDGET(entry->image));
+                g_debug ("zzz image widget name: %s", name);
+
+//                child_alloc.height = 24;
+//                gtk_widget_set_allocation(GTK_WIDGET(entry->image), &child_alloc);
 
                 if (gtk_widget_get_sensitive(GTK_WIDGET(entry->image))) {
                         something_sensitive = TRUE;
